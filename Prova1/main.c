@@ -66,8 +66,8 @@ void sequencialSearch (int code, FILE *file) {
     printf("NÃO ENCONTRADO");
 }
 
-void keySort() {
-
+void keySort(int code, FILE *file) {
+    
 }
 
 // (D)
@@ -106,4 +106,3 @@ int main() {
     return 0;
 }
     // TEmployee *emp = binary_search(8, file, empQty);
-
