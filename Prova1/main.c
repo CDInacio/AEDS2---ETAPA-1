@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-typedef struct Employee{
+typedef struct Employee { 
     int code;
     char name[30];
     char cpf[11];
@@ -36,7 +36,7 @@ TEmployee *read(FILE *in) {
 // (A)
 // Crie uma base de dados contendo 100 registros de funcionários,
 // armazenados em um arquivo binário.
-void createData(FILE *file, int empQty) {
+void createDataSet(FILE *file, int empQty) {
     for (int i = 1; i <= empQty; i++) {
         TEmployee emp;
         emp.code = i;
@@ -54,7 +54,7 @@ void createData(FILE *file, int empQty) {
 // como chave de busca o código do funcionário. Informe o total de compar
 // ações feitas até encontrar o funcionário em questão, bem como o tempo 
 // gasto na busca.
-void sequencial_search (int code, FILE *file) {
+void sequencialSearch (int code, FILE *file) {
     for (int i = 1; i <= 100; i++) {
         fseek(file, i*sizeof(TEmployee), SEEK_SET);
         TEmployee *emp = read(file);
@@ -66,11 +66,15 @@ void sequencial_search (int code, FILE *file) {
     printf("NÃO ENCONTRADO");
 }
 
+void keySort() {
+
+}
+
 // (D)
 // Realize a busca pelo mesmo funcionário escolhido na letra b. Utilize agora a busca
 // binária no arquivo ordenado. Informe o total de comparações feitas até encontrar o
 // funcionário em questão, bem como o tempo gasto na busca.
-TEmployee *binary_search(int code, FILE *file, int size) {
+TEmployee *binarySearch (int code, FILE *file, int size) {
     int left = 0, right =  size - 1;
     while(left <= right) {
         int middle = (left + right) / 2;
@@ -102,3 +106,4 @@ int main() {
     return 0;
 }
     // TEmployee *emp = binary_search(8, file, empQty);
+
