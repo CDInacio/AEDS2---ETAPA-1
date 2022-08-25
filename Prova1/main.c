@@ -92,6 +92,32 @@ TEmployee *binary_search(int code, FILE *file, int size) {
     return NULL;
 }
 
+void insertionSort(FILE *file, int size) {
+    fseek(file, 0, SEEK_SET);
+    int i;
+    for (int j = 2; j <= size; j++) {
+        fseek(file, (j-1) * registerSize(), SEEK_SET);
+        TFunc *fj = read(file);
+        i = j - 1;
+        fseek(file, (i-1) * registerSize(), SEEK_SET);
+        do{
+            TFunc *fi = read(file);
+            if( (fi->cod < fj->cod)){
+                break;
+            }
+            fseek(file, i * registerSize(), SEEK_SET);
+            save(fi, file);
+            i = i - 1;
+            fseek(file, (i-1) * registerSize(), SEEK_SET);
+            free(fi);
+        }while ((i > 0) );
+        fseek(file, (i) * registerSize(), SEEK_SET);
+        save(fj, file);
+        free(fj);
+    }
+    fflush(file);
+}
+
 int main() {
     clock_t start, end;
 
