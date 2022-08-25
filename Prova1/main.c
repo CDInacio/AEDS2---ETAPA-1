@@ -11,6 +11,10 @@ typedef struct Employee{
     double wage;
 }TEmployee;
 
+int registerSize() {
+     return sizeof(TEmployee);
+ }
+
 void save(TEmployee *employee, FILE *out) {
     fwrite(&employee->code, sizeof(int), 1, out);
     fwrite(employee->name, sizeof(char), sizeof(employee->name), out);
