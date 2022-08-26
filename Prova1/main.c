@@ -11,6 +11,12 @@ typedef struct Employee{
     double wage;
 }TEmployee;
 
+typedef struct EmployeeKey{
+    int position;
+    char code;
+} TKey;
+
+// Pega o tamanho do registro
 int registerSize() {
      return sizeof(TEmployee);
  }
@@ -21,6 +27,21 @@ void save(TEmployee *employee, FILE *out) {
     fwrite(employee->cpf, sizeof(char), sizeof(employee->cpf), out);
     fwrite(employee->birthday, sizeof(char), sizeof(employee->birthday), out);
     fwrite(&employee->wage, sizeof(double), 1, out);
+}
+
+void saveKey(TKey *key, FILE *out) {
+    fwrite(&key->code, sizeof(int), 1, out);
+    fwrite(&key->position, sizeof(int), 1, out);
+}
+
+TKey *readKey (FILE *in) {
+    TKey *key = (TKey*)malloc(sizeof(TKey));
+    if(0 >= fread(&key->code, sizeof(int), 1, in)) {
+        free(key);
+        return NULL;
+    }
+    fread(&key->position, sizeof(int), 1, in);
+    return key;
 }
 
 TEmployee *read(FILE *in) {
@@ -38,6 +59,22 @@ TEmployee *read(FILE *in) {
     return emp;
 }
 
+void printData(TEmployee * emp) {
+    if(emp == NULL) {
+        printf("Funcionario nao encontrado!\n");
+    }
+    else {
+        printf("[Funcionario encontrado!] \n");
+        printf("- Codigo: %d \n",emp->code);
+        printf("- Nome: %s \n",emp->name);
+        printf("- CPF: %s \n",emp->cpf);
+        printf("- Data de Nascimento: %s \n", emp->birthday);
+        printf("- Salario: R$ %.2f\n\n", emp->wage);
+    }
+}
+
+// -----------------------------------------------------------------------------------------------------------------
+
 // (A)
 // Crie uma base de dados contendo 100 registros de funcionários,
 // armazenados em um arquivo binário.
@@ -54,26 +91,74 @@ void createDataBase(FILE *file, int empQty) {
     }
 }
 
+// -----------------------------------------------------------------------------------------------------------------
+
 // (B)
 // Realize uma busca sequencial por um funcionário específico. Considerar como
 // chave de busca o código do funcionário. Informe o total de comparações feitas até encontrar o
 // funcionário em questão, bem como o tempo gasto na busca.
-TEmployee *sequencial_search(int code, FILE *file) {
-    int i = 0;
-    while (i < 100) {
-        fseek(file, sizeof(struct Employee), SEEK_SET);
-        TEmployee *emp = read(file);
-        if (code == emp->code) {
+TEmployee *sequencial_search(int code, FILE *file, int size) {
+    int i;
+    clock_t t;
+    t = clock();
+    double timeTaken;
+    for(i=1; i<= size; i++) {
+        fseek(file, i*sizeof(TEmployee), SEEK_SET);
+        TEmployee *emp = le(file);
+        if(code == emp->code) {
+            t = clock() - t;
+            timeTaken = ((double)t) / CLOCKS_PER_SEC;
+            printf("BUSCA SEQUENCIAL\n");
+            printf("  [Demorou %f segundos para executar] \n", timeTaken);
+            printf("  [Numero de comparacoes: %d] \n", i);
             return emp;
-        } else {
-            printf("Employee register not found!! \n");
-            return NULL;
         }
-        i++;
-    }   
+    }
+    t = clock() - t;
+    timeTaken = ((double)t)/CLOCKS_PER_SEC;
+    printf("BUSCA SEQUENCIAL\n");
+    printf("  [Demorou %f segundos para executar] \n", timeTaken);
+    printf("  [Numero de comparações: %d] \n", i);
     return NULL;
 }
 
+// -----------------------------------------------------------------------------------------------------------------
+
+// (C)
+// Utilize o método de ordenação KeySorting para ordenar o arquivo contendo a base
+// de dados. Informe tempo na ordenação.
+void createKeyes(FILE *file, FILE *fileKey, int nFunc) {
+    for(int i=1; i<= nFunc; i++) {
+        fseek(file,i*sizeof(TEmployee), SEEK_SET);
+        TEmployee *emp = read(file);
+        TKey key;
+        key.code = emp->code;
+        key.position = i;
+        fseek(fileKey,(i-1)*sizeof(TKey), SEEK_SET);
+        saveKey(&key, fileKey);
+    }
+}
+
+TEmployee *searchKeys(FILE *file, FILE *fileKey, int code, int size ) {
+    clock_t t;
+    t = clock();
+    double takenTime;
+    for(int i = 0; i<size; i++) {
+        fseek(fileKey,i*sizeof(TKey),SEEK_SET);
+        TKey *key = leKey(fileKey);
+        if(code == key->code) {
+            fseek(file,key->position*sizeof(TEmployee),SEEK_SET);
+            TEmployee *emp = readKey(file);
+            takenTime = ((double)t)/CLOCKS_PER_SEC; // in seconds
+            printf("BUSCA KEY\n");
+            printf("  [Demorou %f segundos para executar] \n", takenTime);
+            return emp;
+        }
+    }
+    return NULL;
+}
+
+// -----------------------------------------------------------------------------------------------------------------
 
 // (D)
 // Realize a busca pelo mesmo funcionário escolhido na letra b. Utilize agora a busca
@@ -96,58 +181,63 @@ TEmployee *binary_search(int code, FILE *file, int size) {
     return NULL;
 }
 
+// -----------------------------------------------------------------------------------------------------------------
+
+// Insertion Sort (Extra)
 void insertionSort(FILE *file, int size) {
     fseek(file, 0, SEEK_SET);
     int i;
     for (int j = 2; j <= size; j++) {
         fseek(file, (j-1) * registerSize(), SEEK_SET);
-        TFunc *fj = read(file);
+        TEmployee *f = read(file);
         i = j - 1;
         fseek(file, (i-1) * registerSize(), SEEK_SET);
         do{
-            TFunc *fi = read(file);
-            if( (fi->cod < fj->cod)){
+            TEmployee *fl = read(file);
+            if( (fl->code < fl->code)){
                 break;
             }
             fseek(file, i * registerSize(), SEEK_SET);
-            save(fi, file);
+            save(fl, file);
             i = i - 1;
             fseek(file, (i-1) * registerSize(), SEEK_SET);
-            free(fi);
+            free(fl);
         }while ((i > 0) );
         fseek(file, (i) * registerSize(), SEEK_SET);
-        save(fj, file);
-        free(fj);
+        save(f, file);
+        free(f);
     }
     fflush(file);
 }
 
+// -----------------------------------------------------------------------------------------------------------------
+
 int main() {
-    clock_t start, end;
+    FILE *file = fopen("funcionarios.dat", "wb+");
+    FILE *fileKey = fopen("funcionariosKeys.dat", "wb+");
 
-    FILE *file = fopen("prova1.dat", "wb+");
-    if (file == NULL) {
-        printf("Unable to open the file! \n");
+    if(file==NULL) {
+        printf("Não foi possivel abrir o arquivo! \n");
         return 1;
     }
 
-    int empQty = 100;
-    createDataBase(file, empQty);
-    // TEmployee *emp = binary_search(8, file, empQty);
-    TEmployee *emp = sequencial_search(8, file);
-
-    if (emp != NULL) {
-        printf("### EMPLOYEE REGISTER FOUND!!! ### \n\n");
-        printf("Code: %d \n", emp->code);
-        printf("Name: %s \n", emp->name);
-        printf("Cpf: %s \n", emp->cpf);
-        printf("Birthday: %s \n", emp->birthday);
-        printf("Wage: %.2f \n", emp->wage);
-    } else {
-        printf("Employee register not found! \n");
+    if(fileKey==NULL) {
+        printf("Não foi possivel abrir o arquivo! \n");
         return 1;
     }
+    
+    int numberOfEmployees= 100;
+    cria_base_dados(file,numberOfEmployees);
 
+    TEmployee *emp = sequencial_search(2, file, numberOfEmployees);
+    printData(emp);
+    emp = binary_search(2, file, numberOfEmployees);
+    printData(emp);
+    createKeyes(file, fileKey, 99);
+
+    emp = searchKeys(file, fileKey, 2, 99);
+
+    printData(emp);
     free(emp);
     fclose(file);
     return 0;
