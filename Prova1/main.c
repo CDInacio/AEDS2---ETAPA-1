@@ -104,7 +104,7 @@ TEmployee *sequencial_search(int code, FILE *file, int size) {
     double timeTaken;
     for(i=1; i<= size; i++) {
         fseek(file, i*sizeof(TEmployee), SEEK_SET);
-        TEmployee *emp = le(file);
+        TEmployee *emp = read(file);
         if(code == emp->code) {
             t = clock() - t;
             timeTaken = ((double)t) / CLOCKS_PER_SEC;
@@ -145,7 +145,7 @@ TEmployee *searchKeys(FILE *file, FILE *fileKey, int code, int size ) {
     double takenTime;
     for(int i = 0; i<size; i++) {
         fseek(fileKey,i*sizeof(TKey),SEEK_SET);
-        TKey *key = leKey(fileKey);
+        TKey *key = readKey(fileKey);
         if(code == key->code) {
             fseek(file,key->position*sizeof(TEmployee),SEEK_SET);
             TEmployee *emp = readKey(file);
@@ -194,7 +194,7 @@ void insertionSort(FILE *file, int size) {
         fseek(file, (i-1) * registerSize(), SEEK_SET);
         do{
             TEmployee *fl = read(file);
-            if( (fl->code < fl->code)){
+            if( (fl->code < f->code)){
                 break;
             }
             fseek(file, i * registerSize(), SEEK_SET);
@@ -212,33 +212,52 @@ void insertionSort(FILE *file, int size) {
 
 // -----------------------------------------------------------------------------------------------------------------
 
+void printDataset(FILE *file, int size){
+    int i = 0;
+    fseek(file, 0 * sizeof(struct Employee), SEEK_SET);
+    if (file != NULL) {
+
+        int aux = 1;
+        do {
+            fseek(file, (i)*registerSize(), SEEK_SET);
+            TEmployee *emp = read(file);
+            if (emp) {
+                printData(emp);
+                i++;
+                free(emp);
+            }
+            else
+                aux = 0;
+        } while (aux);
+    }
+    else
+        printf("Erro ao abrir arquivo\n");
+}
+
+// -----------------------------------------------------------------------------------------------------------------
+
 int main() {
+
     FILE *file = fopen("funcionarios.dat", "wb+");
-    FILE *fileKey = fopen("funcionariosKeys.dat", "wb+");
 
     if(file==NULL) {
         printf("Não foi possivel abrir o arquivo! \n");
         return 1;
     }
 
-    if(fileKey==NULL) {
-        printf("Não foi possivel abrir o arquivo! \n");
-        return 1;
-    }
-    
-    int numberOfEmployees= 100;
-    cria_base_dados(file,numberOfEmployees);
+    createDataBase(file, 100);
+    insertionSort(file, 100);
+    printDataset(file, 100);
 
-    TEmployee *emp = sequencial_search(2, file, numberOfEmployees);
-    printData(emp);
-    emp = binary_search(2, file, numberOfEmployees);
-    printData(emp);
-    createKeyes(file, fileKey, 99);
-
-    emp = searchKeys(file, fileKey, 2, 99);
-
-    printData(emp);
-    free(emp);
-    fclose(file);
+//    printData(emp);
+//    emp = binary_search(2, file, numberOfEmployees);
+//    printData(emp);
+//    createKeyes(file, fileKey, 99);
+//
+//    emp = searchKeys(file, fileKey, 2, 99);
+//
+//    printData(emp);
+//    free(emp);
+//    fclose(file);
     return 0;
 }
